@@ -1,0 +1,55 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ruff *)",
+      "Bash(pyright *)",
+      "Bash(pytest *)",
+      "Bash(python -m pytest*)",
+      "Bash(bandit *)",
+      "Bash(vulture *)",
+      "Bash(radon *)",
+      "Bash(interrogate *)",
+      "Bash(pip list*)",
+      "Bash(pip show*)",
+      "Bash(pip freeze*)",
+      "Bash(pip-audit*)",
+      "Bash(pipdeptree*)",
+      "Bash(python -m cProfile*)",
+      "Bash(python -X importtime*)",
+      "Bash(make *)",
+      "Bash(./qa_check.sh)",
+      "Bash(./qa_quick.sh)"
+    ],
+    "deny": [
+      "Bash(pip install* --break-system-packages*)",
+      "Bash(rm -rf /)*",
+      "Bash(sudo *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/post-edit-lint.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-bash-venv.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

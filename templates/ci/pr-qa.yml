@@ -1,0 +1,62 @@
+name: PR Quality Checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  qa:
+    name: Quality & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python {{PYRIGHT_VER}}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "{{PYRIGHT_VER}}"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv pip install -e ".[dev]" 2>/dev/null || uv pip install -r requirements-dev.txt
+          uv pip install -r requirements.txt 2>/dev/null || true
+
+      - name: Format check
+        run: |
+          source .venv/bin/activate
+          ruff format --check {{SRC_DIR}}
+
+      - name: Lint
+        run: |
+          source .venv/bin/activate
+          ruff check {{SRC_DIR}}
+
+      - name: Type check
+        run: |
+          source .venv/bin/activate
+          pyright {{SRC_DIR}}
+
+      - name: Security scan
+        run: |
+          source .venv/bin/activate
+          bandit -r {{SRC_DIR}} -ll -q
+
+      - name: Tests
+        run: |
+          source .venv/bin/activate
+          pytest --cov={{SRC_DIR}} --cov-report=term-missing --cov-report=xml -v
+
+      - name: Upload coverage
+        if: github.event_name == 'pull_request'
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage.xml
+          fail_ci_if_error: false
